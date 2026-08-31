@@ -21,4 +21,15 @@ Este proyecto es una plataforma web local desarrollada para gestionar, controlar
    git clone https://github.com/OscarEscoHdz/Sistema-de-acceso-lab-A-004.git
    cd "Sistema de acceso a lab 004 - Web"
    
+# Crear un entorno virtual
+python -m venv venv
+# En Windows:
+venv\Scripts\activate
+# En Linux/Kubuntu:
+source venv/bin/activate
 
+# Instalar dependecias
+pip install -r requirements.txt
+
+# Iniciar el servidor
+uvicorn main:app --reload
