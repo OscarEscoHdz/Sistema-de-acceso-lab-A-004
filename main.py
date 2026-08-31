@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status, Request
+from fastapi import FastAPI, HTTPException, status, Request, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
@@ -7,6 +7,8 @@ import sqlite3
 import re
 from datetime import datetime
 from typing import Optional, List
+import csv
+import io
 
 app = FastAPI(title="API Laboratorio de Software", version="1.0.0")
 DB_NAME = "laboratorio.db"
@@ -68,8 +70,8 @@ class RegistroAccesoRequest(BaseModel):
 # Ruta principal para cargar la página web
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
+    # Aquí está la corrección:
+    return templates.TemplateResponse(request=request, name="index.html")
 
 @app.get("/api/alumnos/buscar")
 def buscar_alumnos(q: str = ""):
@@ -151,3 +153,60 @@ def agregar_alumno(alumno: AlumnoBase):
             return {"mensaje": f"Alumno {alumno.nombre} agregado exitosamente"}
         except sqlite3.IntegrityError:
             raise HTTPException(status_code=400, detail="La matrícula ya se encuentra registrada.")
+
+
+# --- MÓDULO DE ADMINISTRADOR ---
+
+class LoginRequest(BaseModel):
+    password: str
+
+@app.post("/api/admin/login")
+def admin_login(payload: LoginRequest):
+    """
+    Verifica la contraseña del administrador.
+    """
+    # Contraseña por defecto para el laboratorio (puedes cambiarla después)
+    if payload.password == "lab004admin":
+        return {"mensaje": "Acceso autorizado"}
+    raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+
+@app.post("/api/admin/importar-csv")
+async def importar_csv(archivo: UploadFile = File(...)):
+    """
+    Recibe un archivo CSV, lee línea por línea y registra a los alumnos válidos.
+    Ignora duplicados y matrículas que no sean del plantel 003.
+    """
+    if not archivo.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="El archivo debe tener extensión .csv")
+    
+    contenido = await archivo.read()
+    texto = contenido.decode("utf-8-sig") # utf-8-sig evita problemas con caracteres especiales y BOM de Excel
+    lector = csv.DictReader(io.StringIO(texto))
+    
+    agregados = 0
+    omitidos = 0
+    
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        for fila in lector:
+            # Aseguramos de leer las columnas correctas sin espacios extra
+            matricula = fila.get("matricula", "").strip()
+            nombre = fila.get("nombre", "").strip()
+            
+            # Validar la regla de negocio del plantel 003
+            if re.match(r'^\d{2}-003-\d{4}$', matricula) and nombre:
+                try:
+                    cursor.execute("""
+                        INSERT INTO alumnos (matricula, nombre, carrera) 
+                        VALUES (?, ?, 'Ingeniería de Software')
+                    """, (matricula, nombre))
+                    agregados += 1
+                except sqlite3.IntegrityError:
+                    # Si la matrícula ya existe, la contamos como omitida
+                    omitidos += 1
+            else:
+                omitidos += 1
+                
+        conn.commit()
+        
+    return {"mensaje": f"Importación completa: {agregados} registrados, {omitidos} omitidos (duplicados/inválidos)."}

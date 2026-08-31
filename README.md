@@ -1,6 +1,6 @@
 
 # Sistema de Acceso - Laboratorio de Software (Plantel San Lorenzo Tezonco)
-
+# Contraseña del sistema: lab004admin
 Este proyecto es una plataforma web local desarrollada para gestionar, controlar y registrar el acceso de los alumnos de Ingeniería de Software al laboratorio. Fue creado como proyecto de servicio social y está diseñado para ser heredado, mantenido y escalado por futuras generaciones.
 
 ## Características Principales
@@ -33,3 +33,11 @@ pip install -r requirements.txt
 
 # Iniciar el servidor
 uvicorn main:app --reload
+
+## Módulo de Escáner por Webcam (Visión por Computadora)
+
+El sistema incluye un script independiente en Python que utiliza la cámara web para leer códigos QR de las credenciales y registrar automáticamente los accesos en el backend.
+
+**Dependencias requeridas:**
+```bash
+pip install opencv-python pyzbar requests numpy qrcode[pil]
