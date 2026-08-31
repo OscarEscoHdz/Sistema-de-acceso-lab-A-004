@@ -25,10 +25,10 @@ Este proyecto es una plataforma web local desarrollada para gestionar, controlar
     python -m venv venv
 
    **En Windows:
-venv\Scripts\activate
+     venv\Scripts\activate
 
     ** En Linux/Kubuntu:
-source venv/bin/activate
+     source venv/bin/activate
 
  **Instalar dependecias
    pip install -r requirements.txt
@@ -40,6 +40,19 @@ uvicorn main:app --reload
 
 El sistema incluye un script independiente en Python que utiliza la cámara web para leer códigos QR de las credenciales y registrar automáticamente los accesos en el backend.
 
-**Dependencias requeridas:**
+## **Dependencias requeridas:**
 ```bash
 pip install opencv-python pyzbar requests numpy qrcode[pil]
+
+
+## Activar el entorno virtual
+.\venv\Scripts\activate
+
+##Iniciar servidor web y base de datos
+uvicorn main:app --reload
+
+##Direccion
+[http://127.0.0.1:8000](http://127.0.0.1:8000)
+
+##Iniciar camara
+python escaner.py
